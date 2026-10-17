@@ -63,8 +63,13 @@ pub struct Battery {
 pub struct DeviceState {
     pub model: Option<String>,
     pub firmware: Option<String>,
+    /// Level from MDR (per-percent) when present, else BlueZ `Battery1.Percentage`;
+    /// `charging` always from MDR (BlueZ does not expose it).
     pub battery: Option<Battery>,
-    /// Device volume 0-30 as reported by the headphones (MDR), if available.
+    /// Playback volume in percent, 0-100. On Linux this is the BlueZ A2DP
+    /// transport volume (`org.bluez.MediaTransport1.Volume`, 0-127) scaled to
+    /// percent; without an A2DP stream it falls back to the MDR music volume
+    /// (device scale 0-30, also scaled to percent).
     pub volume: Option<u8>,
     pub anc: Option<AncMode>,
     /// Ambient sound level 0-20.
@@ -86,7 +91,8 @@ pub async fn discover() -> Result<Vec<DeviceInfo>> {
 //   pub async fn connect_first() -> Result<Device>        // first connected Sony device
 //   pub fn info(&self) -> &DeviceInfo
 //   pub async fn refresh(&mut self) -> Result<DeviceState> // query everything
-//   pub async fn set_anc(&mut self, mode: AncMode, ambient_level: u8, focus_on_voice: bool) -> Result<()>
+//   pub async fn set_anc(&mut self, mode: AncMode, ambient_level: u8, focus_on_voice: bool) -> Result<()> // level 0-20
 //   pub async fn set_ult(&mut self, mode: UltMode) -> Result<()>
-//   pub async fn set_volume(&mut self, volume: u8) -> Result<()>
+//   pub async fn set_volume(&mut self, volume: u8) -> Result<()> // percent 0-100
+//   pub async fn poll(&mut self, timeout: Duration) -> Result<Option<DeviceState>> // added: wait for notifications
 //   pub async fn disconnect(self) -> Result<()>

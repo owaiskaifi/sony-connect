@@ -1,0 +1,163 @@
+name: Release
+
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Existing tag to (re)build, e.g. v0.1.0"
+        required: true
+
+permissions:
+  contents: write
+
+env:
+  CARGO_TERM_COLOR: always
+  TAG: ${{ github.event.inputs.tag || github.ref_name }}
+
+jobs:
+  create-release:
+    name: Create draft release
+    runs-on: ubuntu-22.04
+    outputs:
+      release_id: ${{ steps.release.outputs.id }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ env.TAG }}
+
+      - name: Create (or reuse) draft release
+        id: release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          if ! gh release view "$TAG" >/dev/null 2>&1; then
+            gh release create "$TAG" --draft --verify-tag \
+              --title "Sony Connect ${TAG#v}" \
+              --notes "Unofficial; not affiliated with or endorsed by Sony. Use at your own risk.
+
+          Assets:
+          - \`.deb\` for Debian/Ubuntu
+          - \`.AppImage\` for other distros
+          - \`sony-connect-cli-*-x86_64-linux\` standalone CLI
+          - \`.pkg.tar.zst\` Arch Linux package"
+          fi
+          id=$(gh api "repos/${GITHUB_REPOSITORY}/releases" --jq ".[] | select(.tag_name==\"$TAG\") | .id" | head -n1)
+          echo "id=$id" >> "$GITHUB_OUTPUT"
+
+  linux-app:
+    name: Tauri app (deb + AppImage)
+    needs: create-release
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ env.TAG }}
+
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            libwebkit2gtk-4.1-dev \
+            libgtk-3-dev \
+            libayatana-appindicator3-dev \
+            librsvg2-dev \
+            libbluetooth-dev \
+            libdbus-1-dev \
+            patchelf \
+            file \
+            pkg-config
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - uses: Swatinem/rust-cache@v2
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: app/package-lock.json
+
+      - name: Install frontend/CLI dependencies
+        working-directory: app
+        run: npm ci --no-audit --no-fund
+
+      - uses: tauri-apps/tauri-action@v0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          projectPath: app
+          releaseId: ${{ needs.create-release.outputs.release_id }}
+          args: --bundles deb,appimage
+
+  cli:
+    name: sony-connect-cli
+    needs: create-release
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ env.TAG }}
+
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            libbluetooth-dev libdbus-1-dev pkg-config
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - uses: Swatinem/rust-cache@v2
+
+      - name: Build
+        run: cargo build --release --locked -p sony-core --bin sony-connect-cli
+
+      - name: Upload to release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          out="sony-connect-cli-${TAG#v}-x86_64-linux"
+          cp target/release/sony-connect-cli "$out"
+          strip "$out"
+          sha256sum "$out" > "$out.sha256"
+          gh release upload "$TAG" "$out" "$out.sha256" --clobber
+
+  arch:
+    name: Arch Linux package
+    needs: create-release
+    runs-on: ubuntu-22.04
+    container:
+      image: archlinux:base-devel
+    steps:
+      - name: Install build dependencies
+        run: |
+          pacman -Syu --noconfirm --needed git github-cli \
+            cargo nodejs npm pkgconf \
+            webkit2gtk-4.1 gtk3 libayatana-appindicator bluez bluez-libs dbus
+
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ env.TAG }}
+
+      - name: Build package as non-root user
+        run: |
+          useradd -m builder
+          mkdir -p /home/builder/pkg
+          cp packaging/arch/PKGBUILD /home/builder/pkg/
+          sed -i "s/^pkgver=.*/pkgver=${TAG#v}/" /home/builder/pkg/PKGBUILD
+          chown -R builder:builder /home/builder/pkg
+          # Dependencies are already installed above, so no -s (no sudo needed).
+          su builder -c 'cd /home/builder/pkg && makepkg --noconfirm --cleanbuild'
+          ls -l /home/builder/pkg/*.pkg.tar.zst
+
+      - name: Upload to release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          gh release upload "$TAG" /home/builder/pkg/*.pkg.tar.zst --clobber --repo "$GITHUB_REPOSITORY"
+
+  # TODO: Windows (tauri-action on windows-latest, .msi/.exe) once the Windows
+  # transport exists in sony-core.
+  # TODO: macOS (tauri-action on macos-latest, .dmg) — not planned for v0.1.

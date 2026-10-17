@@ -1,0 +1,64 @@
+name: CI
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  CARGO_TERM_COLOR: always
+  RUSTFLAGS: -D warnings
+
+jobs:
+  rust:
+    name: fmt / clippy / test
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            libwebkit2gtk-4.1-dev \
+            libgtk-3-dev \
+            libayatana-appindicator3-dev \
+            librsvg2-dev \
+            libbluetooth-dev \
+            libdbus-1-dev \
+            pkg-config
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: |
+            . -> target
+            app/src-tauri -> target
+
+      - name: cargo fmt
+        run: cargo fmt --all --check
+
+      - name: cargo clippy
+        run: cargo clippy --workspace --all-targets --locked -- -D warnings
+
+      - name: cargo test
+        run: cargo test --workspace --locked
+
+      # Only needed if app/src-tauri is NOT a member of the root workspace.
+      - name: app crate (standalone)
+        if: hashFiles('app/src-tauri/Cargo.toml') != ''
+        run: |
+          if cargo metadata --no-deps --format-version 1 | grep -q '"name":"sony-connect"'; then
+            echo "app/src-tauri is a workspace member; already checked above"
+          else
+            cargo fmt --manifest-path app/src-tauri/Cargo.toml --check
+            cargo clippy --manifest-path app/src-tauri/Cargo.toml --all-targets --locked -- -D warnings
+            cargo test --manifest-path app/src-tauri/Cargo.toml --locked
+          fi

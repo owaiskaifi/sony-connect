@@ -1,0 +1,15 @@
+{
+  "name": "sony-connect-app",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Sony Connect desktop app (unofficial, not affiliated with Sony)",
+  "license": "MIT",
+  "scripts": {
+    "tauri": "tauri",
+    "dev": "tauri dev",
+    "build": "tauri build"
+  },
+  "devDependencies": {
+    "@tauri-apps/cli": "^2"
+  }
+}

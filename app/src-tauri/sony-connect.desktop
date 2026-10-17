@@ -1,0 +1,11 @@
+[Desktop Entry]
+Type=Application
+Name={{name}}
+GenericName=Headphones Control
+Comment=Control Sony headphones (unofficial, not affiliated with Sony)
+Exec={{exec}}
+StartupWMClass={{exec}}
+Icon={{icon}}
+Terminal=false
+Categories=AudioVideo;Audio;
+Keywords=headphones;bluetooth;noise cancelling;anc;battery;sony;

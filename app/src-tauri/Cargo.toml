@@ -1,0 +1,35 @@
+[package]
+name = "sony-connect"
+description = "Sony Connect: control Sony headphones from the Linux desktop. Unofficial, not affiliated with Sony."
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+default-run = "sony-connect"
+
+[[bin]]
+name = "sony-connect"
+path = "src/main.rs"
+
+[lib]
+name = "sony_connect_lib"
+crate-type = ["rlib"]
+
+[features]
+default = ["real"]
+# Fake in-memory device; no Bluetooth needed.
+mock = []
+# Real headphones via the sony-core crate.
+real = ["dep:sony-core"]
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+tauri = { version = "2", features = ["tray-icon"] }
+serde.workspace = true
+serde_json.workspace = true
+tokio.workspace = true
+async-trait = "0.1"
+log = "0.4"
+sony-core = { path = "../../crates/sony-core", optional = true }

@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <title>Sony Connect</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="headerbar">
+    <div class="device">
+      <div class="device-name" id="device-name">Sony Connect</div>
+      <div class="status" id="status"><span class="dot"></span><span id="status-text">Starting…</span></div>
+    </div>
+    <button class="icon-btn" id="btn-devices" title="Devices" aria-label="Devices">
+      <svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><path fill="currentColor" d="M2 4h12v1.5H2zm0 3.25h12v1.5H2zm0 3.25h12V12H2z"/></svg>
+    </button>
+  </header>
+
+  <div class="popover hidden" id="devices-popover" role="dialog" aria-label="Devices">
+    <div class="popover-title">Paired devices</div>
+    <ul id="device-list"><li class="muted">Loading…</li></ul>
+    <button class="pill" id="btn-auto">Connect automatically</button>
+  </div>
+
+  <main id="content">
+    <section class="card battery-card" id="battery-card">
+      <div class="battery" id="battery" aria-label="Battery">
+        <div class="battery-body"><div class="battery-fill" id="battery-fill"></div>
+          <svg class="bolt" id="bolt" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M13 2 4 14h6l-1 8 9-12h-6z"/></svg>
+        </div>
+        <div class="battery-cap"></div>
+      </div>
+      <div class="battery-text">
+        <div class="battery-level" id="battery-level">—</div>
+        <div class="muted" id="battery-sub">Battery</div>
+      </div>
+    </section>
+
+    <section class="card" id="volume-row">
+      <div class="row">
+        <svg class="row-icon" viewBox="0 0 16 16" aria-hidden="true"><path fill="currentColor" d="M2 6h3l4-3v10L5 10H2zm9.5-1.2a4 4 0 0 1 0 6.4l-.9-1.1a2.6 2.6 0 0 0 0-4.2z"/></svg>
+        <span class="row-title">Volume</span>
+        <span class="value" id="volume-value">—</span>
+      </div>
+      <input type="range" id="volume" min="0" max="100" step="1" value="0" aria-label="Volume">
+    </section>
+
+    <section class="card" id="anc-card">
+      <div class="section-title">Noise control</div>
+      <div class="segmented" id="anc" role="radiogroup" aria-label="Noise control">
+        <button data-value="off" role="radio">Off</button>
+        <button data-value="noise_cancelling" role="radio">Noise Cancelling</button>
+        <button data-value="ambient" role="radio">Ambient</button>
+      </div>
+      <div class="ambient hidden" id="ambient">
+        <div class="row">
+          <span class="row-title">Ambient level</span>
+          <span class="value" id="ambient-value">—</span>
+        </div>
+        <input type="range" id="ambient-level" min="0" max="20" step="1" value="10" aria-label="Ambient level">
+        <label class="row switch-row" id="focus-row">
+          <span class="row-title">Focus on voice</span>
+          <input type="checkbox" class="switch" id="focus">
+        </label>
+      </div>
+    </section>
+
+    <section class="card" id="ult-card">
+      <div class="section-title">ULT bass</div>
+      <div class="segmented" id="ult" role="radiogroup" aria-label="ULT">
+        <button data-value="off" role="radio">Off</button>
+        <button data-value="ult1" role="radio">ULT 1</button>
+        <button data-value="ult2" role="radio">ULT 2</button>
+      </div>
+    </section>
+
+    <div class="toast hidden" id="toast"></div>
+  </main>
+
+  <footer class="footer">
+    <span id="model">Model —</span>
+    <span class="sep">·</span>
+    <span id="firmware">Firmware —</span>
+    <div class="disclaimer">Unofficial · not affiliated with Sony<span id="backend-tag"></span></div>
+  </footer>
+
+  <script src="main.js"></script>
+</body>
+</html>

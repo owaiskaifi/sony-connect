@@ -1,0 +1,13 @@
+[Desktop Entry]
+Type=Application
+Version=1.0
+Name=Sony Connect
+GenericName=Headphone Control
+Comment=Control Sony headphones: battery, volume, noise cancelling, ambient sound and ULT mode (unofficial)
+Exec=sony-connect
+Icon=sony-connect
+Terminal=false
+Categories=AudioVideo;Audio;
+Keywords=sony;headphones;bluetooth;anc;noise;ambient;battery;
+StartupNotify=true
+StartupWMClass=sony-connect

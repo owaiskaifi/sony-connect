@@ -1,0 +1,105 @@
+# Maintainer: owais <tv.sarmadsultan@gmail.com>
+#
+# Development package: builds Sony Connect + sony-connect-cli from the latest
+# commit on the default branch.
+#
+# Regenerating .SRCINFO (run from this directory, as a normal user):
+#   makepkg --printsrcinfo > .SRCINFO
+#   namcap PKGBUILD   # optional lint
+#
+# Build locally:
+#   makepkg -si
+
+pkgname=sony-connect-git
+_pkgname=sony-connect
+pkgver=0.1.0.r0.g0000000
+pkgrel=1
+pkgdesc="Unofficial Linux control app for Sony headphones (battery, volume, ANC/ambient, ULT mode, tray) - git version"
+arch=('x86_64' 'aarch64')
+url="https://github.com/owaiskaifi/sony-connect"
+license=('MIT')
+depends=(
+  'webkit2gtk-4.1'
+  'gtk3'
+  'libayatana-appindicator'   # Tauri v2 tray icon (dlopen'd libayatana-appindicator3.so.1)
+  'bluez'
+  'bluez-libs'
+  'dbus'
+  'gcc-libs'
+  'glibc'
+)
+makedepends=(
+  'git'
+  'cargo'
+  'nodejs'
+  'npm'
+  'pkgconf'
+  'webkit2gtk-4.1'
+)
+optdepends=('bluez-utils: bluetoothctl for pairing the headset')
+provides=("$_pkgname=${pkgver%%.r*}")
+conflicts=("$_pkgname")
+options=('!lto')
+source=("$_pkgname::git+$url.git")
+sha256sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/$_pkgname"
+  # v0.1.0-5-gabc1234 -> 0.1.0.r5.gabc1234; falls back to 0.1.0.rN.g<hash> before the first tag
+  if git describe --tags >/dev/null 2>&1; then
+    git describe --long --tags --abbrev=7 | sed 's/^v//;s/\([^-]*-g\)/r\1/;s/-/./g'
+  else
+    printf "0.1.0.r%s.g%s" "$(git rev-list --count HEAD)" "$(git rev-parse --short=7 HEAD)"
+  fi
+}
+
+prepare() {
+  cd "$srcdir/$_pkgname"
+  export RUSTUP_TOOLCHAIN=stable
+  local _host
+  _host="$(rustc -vV | sed -n 's/host: //p')"
+  cargo fetch --locked --target "$_host"
+  if [[ -f app/src-tauri/Cargo.toml ]] && ! grep -q 'app/src-tauri' Cargo.toml; then
+    cargo fetch --locked --manifest-path app/src-tauri/Cargo.toml --target "$_host"
+  fi
+  cd app
+  npm ci --no-audit --no-fund
+}
+
+build() {
+  cd "$srcdir/$_pkgname"
+  export RUSTUP_TOOLCHAIN=stable
+  export CARGO_TARGET_DIR="$srcdir/target"
+
+  cargo build --frozen --release -p sony-core --bin sony-connect-cli
+
+  cd app
+  npm run tauri build -- --no-bundle
+}
+
+check() {
+  cd "$srcdir/$_pkgname"
+  export RUSTUP_TOOLCHAIN=stable
+  export CARGO_TARGET_DIR="$srcdir/target"
+  cargo test --frozen --release -p sony-core
+}
+
+package() {
+  cd "$srcdir/$_pkgname"
+  local _target="$srcdir/target/release"
+
+  install -Dm755 "$_target/sony-connect"     "$pkgdir/usr/bin/sony-connect"
+  install -Dm755 "$_target/sony-connect-cli" "$pkgdir/usr/bin/sony-connect-cli"
+
+  install -Dm644 packaging/linux/sony-connect.desktop \
+    "$pkgdir/usr/share/applications/sony-connect.desktop"
+
+  local _icons=app/src-tauri/icons
+  install -Dm644 "$_icons/32x32.png"      "$pkgdir/usr/share/icons/hicolor/32x32/apps/sony-connect.png"
+  install -Dm644 "$_icons/128x128.png"    "$pkgdir/usr/share/icons/hicolor/128x128/apps/sony-connect.png"
+  install -Dm644 "$_icons/128x128@2x.png" "$pkgdir/usr/share/icons/hicolor/256x256/apps/sony-connect.png"
+  install -Dm644 "$_icons/icon.png"       "$pkgdir/usr/share/icons/hicolor/512x512/apps/sony-connect.png"
+
+  install -Dm644 LICENSE   "$pkgdir/usr/share/licenses/$_pkgname/LICENSE"
+  install -Dm644 README.md "$pkgdir/usr/share/doc/$_pkgname/README.md"
+}
