@@ -294,9 +294,17 @@
   $("btn-min").addEventListener("click", () => win && win.minimize());
   $("btn-close").addEventListener("click", () => win && win.close());
 
-  // Mouse wheel over the volume slider nudges volume.
+  // Mouse wheel over the volume slider nudges volume — but only when the wheel
+  // gesture starts on the slider. While the page is being scrolled, the slider
+  // sliding under the pointer must not hijack the wheel.
+  let lastPageWheel = 0;
+  document.addEventListener("wheel", (e) => {
+    if (!el.volume.contains(e.target) || performance.now() - lastPageWheel < 500) {
+      lastPageWheel = performance.now();
+    }
+  }, { passive: true, capture: true });
   el.volume.addEventListener("wheel", (e) => {
-    if (el.volume.disabled) return;
+    if (el.volume.disabled || performance.now() - lastPageWheel < 500) return;
     e.preventDefault();
     el.volume.value = Math.max(0, Math.min(100, +el.volume.value + (e.deltaY < 0 ? 5 : -5)));
     el.volume.dispatchEvent(new Event("input"));
