@@ -36,7 +36,7 @@ makedepends=(
   'webkit2gtk-4.1'
 )
 optdepends=('bluez-utils: bluetoothctl for pairing the headset')
-options=('!lto')
+options=('!lto' '!debug')
 source=("$pkgname-$pkgver.tar.gz::$url/archive/refs/tags/v$pkgver.tar.gz")
 sha256sums=('SKIP') # replace with real sum via `updpkgsums` before publishing to the AUR
 

@@ -43,7 +43,8 @@ jobs:
           - \`sony-connect-cli-*-x86_64-linux\` standalone CLI
           - \`.pkg.tar.zst\` Arch Linux package"
           fi
-          id=$(gh api "repos/${GITHUB_REPOSITORY}/releases" --jq ".[] | select(.tag_name==\"$TAG\") | .id" | head -n1)
+          id=$(gh release view "$TAG" --json databaseId --jq .databaseId)
+          test -n "$id" || { echo "could not resolve release id for $TAG"; exit 1; }
           echo "id=$id" >> "$GITHUB_OUTPUT"
 
   linux-app:
@@ -89,6 +90,8 @@ jobs:
         with:
           projectPath: app
           releaseId: ${{ needs.create-release.outputs.release_id }}
+          tagName: ${{ env.TAG }}
+          releaseDraft: true
           args: --bundles deb,appimage
 
   cli:

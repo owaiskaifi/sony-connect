@@ -39,7 +39,7 @@ makedepends=(
 optdepends=('bluez-utils: bluetoothctl for pairing the headset')
 provides=("$_pkgname=${pkgver%%.r*}")
 conflicts=("$_pkgname")
-options=('!lto')
+options=('!lto' '!debug')
 source=("$_pkgname::git+$url.git")
 sha256sums=('SKIP')
 
