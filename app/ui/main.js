@@ -10,15 +10,17 @@
   const el = {
     name: $("device-name"), status: $("status"), statusText: $("status-text"),
     batteryCard: $("battery-card"), battery: $("battery"), batteryFill: $("battery-fill"),
-    batteryLevel: $("battery-level"), batterySub: $("battery-sub"),
-    volumeRow: $("volume-row"), volume: $("volume"), volumeValue: $("volume-value"),
+    batteryLevel: $("battery-level"), batterySub: $("battery-sub"), reconnect: $("btn-reconnect"),
+    volumeRow: $("volume-row"), volume: $("volume"), volumeValue: $("volume-value"), volIcon: $("vol-icon"),
     ancCard: $("anc-card"), anc: $("anc"), ambient: $("ambient"), ambientLevel: $("ambient-level"),
     ambientValue: $("ambient-value"), focus: $("focus"), focusRow: $("focus-row"),
-    ultCard: $("ult-card"), ult: $("ult"),
+    ultCard: $("ult-card"), ult: $("ult"), ultDesc: $("ult-desc"),
     model: $("model"), firmware: $("firmware"), backendTag: $("backend-tag"),
     toast: $("toast"), popover: $("devices-popover"), deviceList: $("device-list"),
     btnDevices: $("btn-devices"), btnAuto: $("btn-auto"),
   };
+
+  const ULT_DESC = { off: "Standard sound", ult1: "Deep bass", ult2: "Powerful, punchy bass" };
 
   let state = null;       // last DeviceState
   let connection = null;  // last Connection
@@ -32,14 +34,54 @@
     range.style.setProperty("--pct", ((+range.value - min) / (max - min)) * 100 + "%");
   }
 
+  function setVolIcon(v) {
+    el.volIcon.dataset.level = v <= 0 ? "0" : v < 50 ? "1" : "2";
+    // Icon sits on the filled part once the fill passes it (~12% of the track).
+    el.volIcon.classList.toggle("dim", v < 12);
+  }
+
   function setUnavailable(node, unavailable) {
     node.classList.toggle("unavailable", unavailable);
     node.querySelectorAll("input, button").forEach((n) => (n.disabled = unavailable));
   }
 
-  function selectSegment(group, value) {
-    group.querySelectorAll("button").forEach((b) =>
-      b.setAttribute("aria-checked", String(b.dataset.value === value)));
+  function selectRadio(group, value) {
+    let index = -1;
+    group.querySelectorAll("button").forEach((b, i) => {
+      const on = b.dataset.value === value;
+      b.setAttribute("aria-checked", String(on));
+      if (on) index = i;
+    });
+    if (group.classList.contains("segmented")) {
+      group.style.setProperty("--i", Math.max(index, 0));
+      group.classList.toggle("none", index < 0);
+    }
+  }
+
+  function setAnc(mode) {
+    document.body.dataset.anc = mode || "none";
+    el.ambient.classList.toggle("open", mode === "ambient");
+  }
+
+  function setUlt(mode) {
+    document.body.dataset.ult = mode || "off";
+    el.ultDesc.textContent = mode ? ULT_DESC[mode] || "" : "Unavailable";
+  }
+
+  // Roll the battery number towards its new value.
+  let shownLevel = null, rollRaf = 0;
+  function countTo(target) {
+    cancelAnimationFrame(rollRaf);
+    const from = shownLevel == null ? Math.max(0, target - 25) : shownLevel;
+    if (from === target) { el.batteryLevel.textContent = target + "%"; return; }
+    const t0 = performance.now(), dur = 700;
+    const step = (now) => {
+      const p = Math.min(1, (now - t0) / dur), e = 1 - Math.pow(1 - p, 3);
+      shownLevel = Math.round(from + (target - from) * e);
+      el.batteryLevel.textContent = shownLevel + "%";
+      if (p < 1) rollRaf = requestAnimationFrame(step);
+    };
+    rollRaf = requestAnimationFrame(step);
   }
 
   let toastTimer;
@@ -70,20 +112,30 @@
     connection = c;
     if (!c) return;
     const s = c.status;
-    el.status.className = "status " + s;
-    let text;
-    if (s === "connected") text = "Connected";
-    else if (s === "connecting") text = "Connecting…";
-    else {
-      text = "Disconnected";
-      if (c.retry_in != null) text += ` · retrying in ${c.retry_in}s`;
-    }
-    el.statusText.textContent = text;
+    const online = s === "connected";
+    el.status.className = "chip " + s;
+    el.statusText.textContent = online ? "Connected" : s === "connecting" ? "Connecting…" : "Not connected";
     el.status.title = c.error || "";
     if (c.device) el.name.textContent = c.device.name;
-    else if (s !== "connected" && !state) el.name.textContent = "Sony Connect";
-    document.body.classList.toggle("offline", s !== "connected");
-    el.backendTag.textContent = c.backend === "mock" ? " · demo mode (mock device)" : "";
+    else if (!state) el.name.textContent = "Not Connected";
+    document.body.classList.toggle("offline", !online);
+    el.reconnect.hidden = s !== "disconnected";
+    el.backendTag.textContent = c.backend === "mock" ? " · demo mode" : "";
+    renderSubline();
+  }
+
+  function renderSubline() {
+    const b = state && state.battery;
+    const s = connection && connection.status;
+    let text;
+    if (s === "connecting") text = "Connecting to your headphones…";
+    else if (s !== "connected") {
+      text = "Turn on your headphones to connect";
+      if (connection && connection.retry_in != null) text += ` · retrying in ${connection.retry_in}s`;
+    } else if (b && b.charging) text = "Charging";
+    else if (b && b.level <= 15) text = "Low battery";
+    else text = "";
+    el.batterySub.textContent = text;
   }
 
   function renderState(s) {
@@ -93,41 +145,38 @@
     // Battery
     const b = s.battery;
     if (b && typeof b.level === "number") {
+      const lvl = Math.max(0, Math.min(100, b.level));
       el.batteryCard.classList.remove("unavailable");
-      el.batteryLevel.textContent = b.level + "%";
-      el.batteryFill.style.width = Math.max(0, Math.min(100, b.level)) + "%";
-      el.batteryFill.classList.toggle("low", b.level <= 15);
-      el.batteryFill.classList.toggle("mid", b.level > 15 && b.level <= 35);
+      countTo(lvl);
+      el.batteryFill.style.width = lvl + "%";
+      el.batteryFill.classList.toggle("low", lvl <= 15);
       el.battery.classList.toggle("charging", !!b.charging);
-      el.batterySub.textContent = b.charging ? "Charging" : "Battery";
     } else {
       el.batteryCard.classList.add("unavailable");
       el.batteryLevel.textContent = "—";
+      shownLevel = null;
       el.batteryFill.style.width = "0";
       el.battery.classList.remove("charging");
-      el.batterySub.textContent = "Battery unavailable";
     }
+    renderSubline();
 
     // Volume
     const hasVol = typeof s.volume === "number";
     setUnavailable(el.volumeRow, !hasVol);
-    if (hasVol) {
-      if (!dragging.volume) el.volume.value = s.volume;
-      el.volumeValue.textContent = el.volume.value + "%";
-    } else {
-      el.volumeValue.textContent = "Unavailable";
-    }
+    if (hasVol && !dragging.volume) el.volume.value = s.volume;
+    el.volumeValue.textContent = hasVol ? el.volume.value + "%" : "Unavailable";
     setPct(el.volume);
+    setVolIcon(+el.volume.value);
 
-    // ANC
+    // Noise control
     const hasAnc = typeof s.anc === "string";
     setUnavailable(el.ancCard, !hasAnc);
-    selectSegment(el.anc, hasAnc ? s.anc : null);
-    el.ambient.classList.toggle("hidden", s.anc !== "ambient");
+    selectRadio(el.anc, hasAnc ? s.anc : null);
+    setAnc(hasAnc ? s.anc : null);
     const hasLevel = typeof s.ambient_level === "number";
     el.ambientLevel.disabled = !hasLevel;
     if (hasLevel && !dragging.ambient) el.ambientLevel.value = s.ambient_level;
-    el.ambientValue.textContent = hasLevel ? el.ambientLevel.value : "Unavailable";
+    el.ambientValue.textContent = hasLevel ? el.ambientLevel.value : "—";
     setPct(el.ambientLevel);
     const hasFocus = typeof s.focus_on_voice === "boolean";
     el.focusRow.classList.toggle("unavailable", !hasFocus);
@@ -137,11 +186,12 @@
     // ULT
     const hasUlt = typeof s.ult === "string";
     setUnavailable(el.ultCard, !hasUlt);
-    selectSegment(el.ult, hasUlt ? s.ult : null);
+    selectRadio(el.ult, hasUlt ? s.ult : null);
+    setUlt(hasUlt ? s.ult : null);
 
     // Footer
-    el.model.textContent = "Model " + (s.model || "unavailable");
-    el.firmware.textContent = "Firmware " + (s.firmware || "unavailable");
+    el.model.textContent = s.model || "Sony headphones";
+    el.firmware.textContent = s.firmware ? "Firmware " + s.firmware : "Firmware —";
   }
 
   // ------------------------------------------------------------ controls
@@ -151,6 +201,7 @@
     dragging.volume = true;
     el.volumeValue.textContent = el.volume.value + "%";
     setPct(el.volume);
+    setVolIcon(+el.volume.value);
     sendVolume(+el.volume.value);
   });
   el.volume.addEventListener("change", () => { dragging.volume = false; });
@@ -166,8 +217,8 @@
   el.anc.addEventListener("click", (e) => {
     const btn = e.target.closest("button");
     if (!btn || btn.disabled) return;
-    selectSegment(el.anc, btn.dataset.value);
-    el.ambient.classList.toggle("hidden", btn.dataset.value !== "ambient");
+    selectRadio(el.anc, btn.dataset.value);
+    setAnc(btn.dataset.value);
     sendAnc(btn.dataset.value);
   });
 
@@ -184,9 +235,12 @@
   el.ult.addEventListener("click", (e) => {
     const btn = e.target.closest("button");
     if (!btn || btn.disabled) return;
-    selectSegment(el.ult, btn.dataset.value);
+    selectRadio(el.ult, btn.dataset.value);
+    setUlt(btn.dataset.value);
     call("set_ult", { mode: btn.dataset.value }).catch(() => renderState(state));
   });
+
+  el.reconnect.addEventListener("click", () => call("connect", { address: null }).catch(() => {}));
 
   // Device picker
   async function openDevices() {
@@ -233,6 +287,60 @@
   });
   document.addEventListener("keydown", (e) => {
     if (e.key === "Escape") el.popover.classList.add("hidden");
+  });
+
+  // Window controls (frameless window)
+  const win = T && T.window ? T.window.getCurrentWindow() : null;
+  $("btn-min").addEventListener("click", () => win && win.minimize());
+  $("btn-close").addEventListener("click", () => win && win.close());
+
+  // Mouse wheel over the volume slider nudges volume.
+  el.volume.addEventListener("wheel", (e) => {
+    if (el.volume.disabled) return;
+    e.preventDefault();
+    el.volume.value = Math.max(0, Math.min(100, +el.volume.value + (e.deltaY < 0 ? 5 : -5)));
+    el.volume.dispatchEvent(new Event("input"));
+    clearTimeout(el.volume._wheelEnd);
+    el.volume._wheelEnd = setTimeout(() => { dragging.volume = false; }, 400);
+  }, { passive: false });
+
+  // Gentle 3D tilt of the headphones following the pointer.
+  const art = $("art"), phones = art.querySelector(".phones");
+  const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  if (!reduceMotion) {
+    document.addEventListener("pointermove", (e) => {
+      const r = art.getBoundingClientRect();
+      const dx = (e.clientX - (r.left + r.width / 2)) / window.innerWidth;
+      const dy = (e.clientY - (r.top + r.height / 2)) / window.innerHeight;
+      phones.style.setProperty("--rx", (dx * 14).toFixed(2) + "deg");
+      phones.style.setProperty("--ry", (-dy * 10).toFixed(2) + "deg");
+    });
+    document.addEventListener("pointerleave", () => {
+      phones.style.setProperty("--rx", "0deg");
+      phones.style.setProperty("--ry", "0deg");
+    });
+  }
+
+  // Keyboard: 1/2/3 noise modes, U cycles ULT, arrows change volume.
+  const clickRadio = (group, value) => {
+    const b = group.querySelector(`button[data-value="${value}"]`);
+    if (b && !b.disabled) b.click();
+  };
+  document.addEventListener("keydown", (e) => {
+    if (e.target.matches("input") || e.ctrlKey || e.metaKey || e.altKey) return;
+    const k = e.key.toLowerCase();
+    if (k === "1") clickRadio(el.anc, "off");
+    else if (k === "2") clickRadio(el.anc, "noise_cancelling");
+    else if (k === "3") clickRadio(el.anc, "ambient");
+    else if (k === "u" && state && state.ult) {
+      const order = ["off", "ult1", "ult2"];
+      clickRadio(el.ult, order[(order.indexOf(state.ult) + 1) % 3]);
+    } else if ((k === "arrowup" || k === "arrowdown") && !el.volume.disabled) {
+      e.preventDefault();
+      el.volume.value = Math.max(0, Math.min(100, +el.volume.value + (k === "arrowup" ? 5 : -5)));
+      el.volume.dispatchEvent(new Event("input"));
+      dragging.volume = false;
+    }
   });
 
   // ------------------------------------------------------------ boot

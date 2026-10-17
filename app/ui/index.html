@@ -7,85 +7,149 @@
   <title>Sony Connect</title>
   <link rel="stylesheet" href="styles.css">
 </head>
-<body>
-  <header class="headerbar">
-    <div class="device">
-      <div class="device-name" id="device-name">Sony Connect</div>
-      <div class="status" id="status"><span class="dot"></span><span id="status-text">Starting…</span></div>
+<body class="offline" data-anc="none" data-ult="off">
+<div class="window" id="window">
+  <div class="aura" aria-hidden="true"></div>
+
+  <header class="topbar" data-tauri-drag-region>
+    <div class="chip" id="status" role="status" data-tauri-drag-region>
+      <span class="dot"></span><span id="status-text">Starting…</span>
     </div>
-    <button class="icon-btn" id="btn-devices" title="Devices" aria-label="Devices">
-      <svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><path fill="currentColor" d="M2 4h12v1.5H2zm0 3.25h12v1.5H2zm0 3.25h12V12H2z"/></svg>
+    <button class="round-btn" id="btn-devices" title="Devices" aria-label="Devices" aria-haspopup="dialog">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h10" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
     </button>
+    <div class="win-controls">
+      <button class="win-btn" id="btn-min" title="Minimize" aria-label="Minimize">
+        <svg viewBox="0 0 12 12" aria-hidden="true"><path d="M2.5 6h7" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+      </button>
+      <button class="win-btn close" id="btn-close" title="Close" aria-label="Close">
+        <svg viewBox="0 0 12 12" aria-hidden="true"><path d="M3 3l6 6M9 3l-6 6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+      </button>
+    </div>
   </header>
 
-  <div class="popover hidden" id="devices-popover" role="dialog" aria-label="Devices">
-    <div class="popover-title">Paired devices</div>
+  <div class="sheet hidden" id="devices-popover" role="dialog" aria-label="Devices">
+    <div class="sheet-title">Devices</div>
     <ul id="device-list"><li class="muted">Loading…</li></ul>
-    <button class="pill" id="btn-auto">Connect automatically</button>
+    <button class="sheet-action" id="btn-auto">Connect automatically</button>
   </div>
 
-  <main id="content">
-    <section class="card battery-card" id="battery-card">
-      <div class="battery" id="battery" aria-label="Battery">
-        <div class="battery-body"><div class="battery-fill" id="battery-fill"></div>
-          <svg class="bolt" id="bolt" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M13 2 4 14h6l-1 8 9-12h-6z"/></svg>
-        </div>
-        <div class="battery-cap"></div>
+  <main>
+    <section class="hero">
+      <div class="art" id="art" data-tauri-drag-region>
+        <div class="glow"></div>
+        <svg class="phones" viewBox="0 0 240 200" aria-hidden="true">
+          <defs>
+            <linearGradient id="g-band" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0" stop-color="var(--hp-hi)"/><stop offset="1" stop-color="var(--hp-lo)"/>
+            </linearGradient>
+            <linearGradient id="g-cup" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0" stop-color="var(--hp-hi)"/><stop offset=".55" stop-color="var(--hp-mid)"/><stop offset="1" stop-color="var(--hp-lo)"/>
+            </linearGradient>
+            <radialGradient id="g-pad" cx=".4" cy=".35" r=".8">
+              <stop offset="0" stop-color="var(--hp-pad-hi)"/><stop offset="1" stop-color="var(--hp-pad-lo)"/>
+            </radialGradient>
+          </defs>
+          <g class="ripples left"><circle cx="52" cy="132" r="40"/><circle cx="52" cy="132" r="40"/><circle cx="52" cy="132" r="40"/></g>
+          <g class="ripples right"><circle cx="188" cy="132" r="40"/><circle cx="188" cy="132" r="40"/><circle cx="188" cy="132" r="40"/></g>
+          <!-- headband -->
+          <path d="M44 112 C40 40 82 16 120 16 S200 40 196 112" fill="none" stroke="url(#g-band)" stroke-width="15" stroke-linecap="round"/>
+          <path d="M58 92 C60 48 90 32 120 32 S180 48 182 92" fill="none" stroke="var(--hp-pad-lo)" stroke-width="7" stroke-linecap="round" opacity=".9"/>
+          <path d="M47 100 C46 52 84 22 120 22" fill="none" stroke="var(--hp-rim)" stroke-width="1.5" stroke-linecap="round"/>
+          <!-- yokes -->
+          <rect x="38" y="96" width="12" height="22" rx="5" fill="url(#g-band)"/>
+          <rect x="190" y="96" width="12" height="22" rx="5" fill="url(#g-band)"/>
+          <!-- cups -->
+          <g class="cup">
+            <rect x="22" y="94" width="60" height="78" rx="28" fill="url(#g-cup)"/>
+            <rect x="22.75" y="94.75" width="58.5" height="76.5" rx="27.5" fill="none" stroke="var(--hp-rim)" stroke-width="1.5"/>
+            <rect x="60" y="104" width="22" height="58" rx="11" fill="url(#g-pad)"/>
+            <text x="41" y="137" class="badge">ULT</text>
+          </g>
+          <g class="cup">
+            <rect x="158" y="94" width="60" height="78" rx="28" fill="url(#g-cup)"/>
+            <rect x="158.75" y="94.75" width="58.5" height="76.5" rx="27.5" fill="none" stroke="var(--hp-rim)" stroke-width="1.5"/>
+            <rect x="158" y="104" width="22" height="58" rx="11" fill="url(#g-pad)"/>
+          </g>
+        </svg>
       </div>
-      <div class="battery-text">
-        <div class="battery-level" id="battery-level">—</div>
-        <div class="muted" id="battery-sub">Battery</div>
+
+      <h1 id="device-name">Sony Connect</h1>
+      <div class="battery" id="battery-card">
+        <span class="batt-glyph" id="battery" aria-hidden="true">
+          <span class="batt-fill" id="battery-fill"></span>
+          <svg class="bolt" viewBox="0 0 12 16"><path d="M7 0 0 9h4.5L4 16l8-10H7.2z" fill="currentColor"/></svg>
+        </span>
+        <span id="battery-level">—</span>
       </div>
+      <div class="subline" id="battery-sub">Looking for your headphones</div>
+      <button class="pill-btn" id="btn-reconnect" hidden>Connect</button>
     </section>
 
     <section class="card" id="volume-row">
-      <div class="row">
-        <svg class="row-icon" viewBox="0 0 16 16" aria-hidden="true"><path fill="currentColor" d="M2 6h3l4-3v10L5 10H2zm9.5-1.2a4 4 0 0 1 0 6.4l-.9-1.1a2.6 2.6 0 0 0 0-4.2z"/></svg>
-        <span class="row-title">Volume</span>
-        <span class="value" id="volume-value">—</span>
+      <div class="card-head"><span class="card-title">Volume</span><span class="value" id="volume-value">—</span></div>
+      <div class="fat-slider">
+        <input type="range" id="volume" min="0" max="100" step="1" value="0" aria-label="Volume">
+        <svg class="slider-icon" id="vol-icon" viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M4 9.5h3.5L12 5.5v13l-4.5-4H4z" fill="currentColor"/>
+          <path class="w1" d="M15 9.2a4 4 0 0 1 0 5.6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+          <path class="w2" d="M17.6 6.8a7.5 7.5 0 0 1 0 10.4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+        </svg>
       </div>
-      <input type="range" id="volume" min="0" max="100" step="1" value="0" aria-label="Volume">
     </section>
 
     <section class="card" id="anc-card">
-      <div class="section-title">Noise control</div>
-      <div class="segmented" id="anc" role="radiogroup" aria-label="Noise control">
-        <button data-value="off" role="radio">Off</button>
-        <button data-value="noise_cancelling" role="radio">Noise Cancelling</button>
-        <button data-value="ambient" role="radio">Ambient</button>
+      <div class="card-head"><span class="card-title">Noise Control</span></div>
+      <div class="tiles" id="anc" role="radiogroup" aria-label="Noise control">
+        <button class="tile" data-value="off" role="radio">
+          <span class="tile-icon"><svg viewBox="0 0 28 28"><circle cx="14" cy="14" r="7" fill="none" stroke="currentColor" stroke-width="2"/></svg></span>
+          <span class="tile-label">Off</span>
+        </button>
+        <button class="tile" data-value="noise_cancelling" role="radio">
+          <span class="tile-icon"><svg viewBox="0 0 28 28"><circle cx="14" cy="14" r="4.5" fill="currentColor"/><circle cx="14" cy="14" r="8.5" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="14" cy="14" r="12.2" fill="none" stroke="currentColor" stroke-width="1.6" opacity=".45"/></svg></span>
+          <span class="tile-label">Noise<br>Cancelling</span>
+        </button>
+        <button class="tile" data-value="ambient" role="radio">
+          <span class="tile-icon"><svg viewBox="0 0 28 28"><circle cx="14" cy="14" r="3.2" fill="currentColor"/><path d="M9 9.5a6.4 6.4 0 0 0 0 9M19 9.5a6.4 6.4 0 0 1 0 9M5.6 6.4a10.8 10.8 0 0 0 0 15.2M22.4 6.4a10.8 10.8 0 0 1 0 15.2" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></span>
+          <span class="tile-label">Ambient<br>Sound</span>
+        </button>
       </div>
-      <div class="ambient hidden" id="ambient">
-        <div class="row">
-          <span class="row-title">Ambient level</span>
-          <span class="value" id="ambient-value">—</span>
+      <div class="collapse" id="ambient">
+        <div class="collapse-inner">
+          <div class="divider"></div>
+          <div class="card-head"><span class="sub-title">Ambient level</span><span class="value" id="ambient-value">—</span></div>
+          <div class="fat-slider slim">
+            <input type="range" id="ambient-level" min="0" max="20" step="1" value="10" aria-label="Ambient level">
+          </div>
+          <label class="switch-row" id="focus-row">
+            <span><span class="sub-title">Focus on Voice</span><span class="hint">Lets voices through, filters the rest</span></span>
+            <input type="checkbox" class="switch" id="focus">
+          </label>
         </div>
-        <input type="range" id="ambient-level" min="0" max="20" step="1" value="10" aria-label="Ambient level">
-        <label class="row switch-row" id="focus-row">
-          <span class="row-title">Focus on voice</span>
-          <input type="checkbox" class="switch" id="focus">
-        </label>
       </div>
     </section>
 
     <section class="card" id="ult-card">
-      <div class="section-title">ULT bass</div>
+      <div class="card-head">
+        <span class="card-title ult-mark">ULT</span>
+        <span class="value" id="ult-desc">—</span>
+      </div>
       <div class="segmented" id="ult" role="radiogroup" aria-label="ULT">
+        <span class="seg-thumb" aria-hidden="true"></span>
         <button data-value="off" role="radio">Off</button>
         <button data-value="ult1" role="radio">ULT 1</button>
         <button data-value="ult2" role="radio">ULT 2</button>
       </div>
     </section>
 
-    <div class="toast hidden" id="toast"></div>
+    <footer class="footer">
+      <span id="model">—</span><span class="sep">·</span><span id="firmware">—</span>
+      <div class="disclaimer">Unofficial · not affiliated with Sony<span id="backend-tag"></span></div>
+    </footer>
   </main>
 
-  <footer class="footer">
-    <span id="model">Model —</span>
-    <span class="sep">·</span>
-    <span id="firmware">Firmware —</span>
-    <div class="disclaimer">Unofficial · not affiliated with Sony<span id="backend-tag"></span></div>
-  </footer>
-
+  <div class="toast hidden" id="toast" role="alert"></div>
+</div>
   <script src="main.js"></script>
 </body>
 </html>

@@ -14,11 +14,14 @@
         "label": "main",
         "title": "Sony Connect",
         "width": 400,
-        "height": 640,
+        "height": 720,
         "minWidth": 340,
-        "minHeight": 480,
+        "minHeight": 560,
         "resizable": true,
-        "center": true
+        "center": true,
+        "decorations": false,
+        "transparent": true,
+        "shadow": true
       }
     ],
     "security": {

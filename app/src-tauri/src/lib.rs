@@ -393,6 +393,28 @@ fn show_main(app: &AppHandle) {
     }
 }
 
+/// True when a StatusNotifier host (the thing that draws tray icons) is on the
+/// session bus.
+async fn tray_host_running() -> bool {
+    #[cfg(target_os = "linux")]
+    {
+        let Ok(conn) = zbus::Connection::session().await else {
+            return false;
+        };
+        let Ok(dbus) = zbus::fdo::DBusProxy::new(&conn).await else {
+            return false;
+        };
+        let Ok(name) = zbus::names::BusName::try_from("org.kde.StatusNotifierWatcher") else {
+            return false;
+        };
+        dbus.name_has_owner(name).await.unwrap_or(false)
+    }
+    #[cfg(not(target_os = "linux"))]
+    {
+        true
+    }
+}
+
 fn build_tray(app: &AppHandle) -> tauri::Result<TrayItems> {
     let status = MenuItem::with_id(app, "status", "Connecting…", false, None::<&str>)?;
     let show = MenuItem::with_id(app, "show", "Show", true, None::<&str>)?;
@@ -484,8 +506,14 @@ fn build_tray(app: &AppHandle) -> tauri::Result<TrayItems> {
                 show_main(tray.app_handle());
             }
         });
-    if let Some(icon) = app.default_window_icon() {
-        builder = builder.icon(icon.clone());
+    // Monochrome glyph: panel icons should be symbolic, not the full-colour app icon.
+    match tauri::image::Image::from_bytes(include_bytes!("../tray/tray.png")) {
+        Ok(icon) => builder = builder.icon(icon),
+        Err(_) => {
+            if let Some(icon) = app.default_window_icon() {
+                builder = builder.icon(icon.clone());
+            }
+        }
     }
     let tray = builder.build(app)?;
 
@@ -518,15 +546,24 @@ pub fn run() {
             set_ult,
             set_volume
         ])
+        .plugin(tauri_plugin_single_instance::init(|app, _args, _cwd| {
+            show_main(app)
+        }))
         .on_window_event(|window, event| {
             if let WindowEvent::CloseRequested { api, .. } = event {
-                // Closing the window hides it to the tray; "Quit" in the tray exits.
-                // Without a tray (e.g. GNOME lacking AppIndicator) closing quits.
+                // Closing hides to the tray, but only if a tray host is actually running:
+                // GNOME loads libappindicator fine yet shows nothing without the
+                // AppIndicator extension, which would leave the app hidden for good.
+                api.prevent_close();
                 let has_tray = window.state::<AppState>().tray.lock().unwrap().is_some();
-                if has_tray {
-                    api.prevent_close();
-                    let _ = window.hide();
-                }
+                let window = window.clone();
+                tauri::async_runtime::spawn(async move {
+                    if has_tray && tray_host_running().await {
+                        let _ = window.hide();
+                    } else {
+                        window.app_handle().exit(0);
+                    }
+                });
             }
         })
         .setup(move |app| {
