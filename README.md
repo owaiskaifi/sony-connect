@@ -3,6 +3,12 @@
 A small Linux desktop + tray app (and CLI) for controlling Sony Bluetooth headphones:
 battery, volume, noise cancelling / ambient sound, and ULT bass mode, without a phone.
 
+<p align="center">
+  <img src="docs/screenshots/light.png" width="300" alt="Sony Connect in light mode">
+  &nbsp;
+  <img src="docs/screenshots/dark.png" width="300" alt="Sony Connect in dark mode with Ambient Sound">
+</p>
+
 > **Disclaimer: Unofficial; not affiliated with or endorsed by Sony. Use at your own risk.**
 > "Sony", "ULT WEAR" and related names are trademarks of Sony Group Corporation and are used
 > here only to describe compatibility.
@@ -21,6 +27,7 @@ battery, volume, noise cancelling / ambient sound, and ULT bass mode, without a 
 - **Noise cancelling / ambient sound**: off, noise cancelling, ambient with level and voice focus
 - **ULT mode**: off, ULT 1, ULT 2
 - **Tray icon** with quick toggles
+- **Keyboard shortcuts:** `1` / `2` / `3` noise off / cancelling / ambient, `U` cycles ULT, `↑` `↓` volume
 - **CLI** (`sony-connect-cli`) for scripting, with JSON output
 
 ## Install

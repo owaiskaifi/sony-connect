@@ -186,9 +186,11 @@ body.offline .aura { opacity: 0.3; }
 
 .sheet {
   position: fixed;
-  top: 52px; right: 76px;
-  z-index: 20;
-  width: 260px;
+  top: 50px; right: 12px;
+  z-index: 50;
+  width: min(280px, calc(100vw - 24px));
+  max-height: calc(100vh - 62px);
+  overflow-y: auto;
   padding: 8px;
   border-radius: 18px;
   background: color-mix(in srgb, var(--card-solid) 82%, transparent);
@@ -273,31 +275,20 @@ main {
 body.offline .phones { filter: grayscale(1) drop-shadow(0 10px 14px rgba(0, 0, 0, 0.12)); opacity: 0.45; }
 body.offline .glow { opacity: 0; }
 
-/* ULT bass ripples radiating from the cups */
-.ripples circle {
-  fill: none;
-  stroke: var(--ult);
-  stroke-width: 2;
+/* ULT: a still, warm halo behind the ear cups (stronger for ULT 2) */
+.ult-halo {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(circle at 24% 66%, color-mix(in srgb, var(--ult) 55%, transparent), transparent 26%),
+    radial-gradient(circle at 76% 66%, color-mix(in srgb, var(--ult) 55%, transparent), transparent 26%);
+  filter: blur(14px);
   opacity: 0;
-  transform-box: fill-box;
-  transform-origin: center;
+  transition: opacity 0.8s var(--ease);
 }
-body:not(.offline)[data-ult="ult1"] .ripples circle { animation: ripple 2.4s var(--ease) infinite; }
-body:not(.offline)[data-ult="ult2"] .ripples circle { animation: ripple-hard 1.6s var(--ease) infinite; stroke-width: 2.6; }
-.ripples circle:nth-child(2) { animation-delay: 0.8s !important; }
-.ripples circle:nth-child(3) { animation-delay: 1.6s !important; }
-body[data-ult="ult2"] .ripples circle:nth-child(2) { animation-delay: 0.53s !important; }
-body[data-ult="ult2"] .ripples circle:nth-child(3) { animation-delay: 1.06s !important; }
-@keyframes ripple {
-  0% { transform: scale(0.9); opacity: 0.55; }
-  100% { transform: scale(1.45); opacity: 0; }
-}
-@keyframes ripple-hard {
-  0% { transform: scale(0.9); opacity: 0.8; }
-  100% { transform: scale(1.7); opacity: 0; }
-}
-body:not(.offline)[data-ult="ult2"] .cup { animation: thump 1.6s var(--ease) infinite; transform-box: fill-box; transform-origin: center; }
-@keyframes thump { 0%, 100% { transform: scale(1); } 8% { transform: scale(1.025); } }
+body:not(.offline)[data-ult="ult1"] .ult-halo { opacity: 0.45; }
+body:not(.offline)[data-ult="ult2"] .ult-halo { opacity: 0.85; }
 
 h1 {
   margin: 6px 0 0;

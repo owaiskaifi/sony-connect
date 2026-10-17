@@ -5,7 +5,8 @@
   "version": "0.1.0",
   "identifier": "dev.owais.sonyconnect",
   "build": {
-    "frontendDist": "../ui"
+    "frontendDist": "../ui",
+    "beforeBundleCommand": "cargo build --release -p sony-core --bin sony-connect-cli"
   },
   "app": {
     "withGlobalTauri": true,
@@ -55,7 +56,10 @@
           "bluez"
         ],
         "section": "sound",
-        "desktopTemplate": "sony-connect.desktop"
+        "desktopTemplate": "sony-connect.desktop",
+        "files": {
+          "/usr/bin/sony-connect-cli": "../../target/release/sony-connect-cli"
+        }
       },
       "appimage": {
         "bundleMediaFramework": false

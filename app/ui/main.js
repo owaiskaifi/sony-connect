@@ -72,8 +72,12 @@
   let shownLevel = null, rollRaf = 0;
   function countTo(target) {
     cancelAnimationFrame(rollRaf);
-    const from = shownLevel == null ? Math.max(0, target - 25) : shownLevel;
-    if (from === target) { el.batteryLevel.textContent = target + "%"; return; }
+    const from = shownLevel;
+    if (from == null || from === target) {
+      shownLevel = target;
+      el.batteryLevel.textContent = target + "%";
+      return;
+    }
     const t0 = performance.now(), dur = 700;
     const step = (now) => {
       const p = Math.min(1, (now - t0) / dur), e = 1 - Math.pow(1 - p, 3);

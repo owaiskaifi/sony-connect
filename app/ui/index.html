@@ -28,16 +28,11 @@
     </div>
   </header>
 
-  <div class="sheet hidden" id="devices-popover" role="dialog" aria-label="Devices">
-    <div class="sheet-title">Devices</div>
-    <ul id="device-list"><li class="muted">Loading…</li></ul>
-    <button class="sheet-action" id="btn-auto">Connect automatically</button>
-  </div>
-
   <main>
     <section class="hero">
       <div class="art" id="art" data-tauri-drag-region>
         <div class="glow"></div>
+        <div class="ult-halo"></div>
         <svg class="phones" viewBox="0 0 240 200" aria-hidden="true">
           <defs>
             <linearGradient id="g-band" x1="0" y1="0" x2="0" y2="1">
@@ -50,8 +45,6 @@
               <stop offset="0" stop-color="var(--hp-pad-hi)"/><stop offset="1" stop-color="var(--hp-pad-lo)"/>
             </radialGradient>
           </defs>
-          <g class="ripples left"><circle cx="52" cy="132" r="40"/><circle cx="52" cy="132" r="40"/><circle cx="52" cy="132" r="40"/></g>
-          <g class="ripples right"><circle cx="188" cy="132" r="40"/><circle cx="188" cy="132" r="40"/><circle cx="188" cy="132" r="40"/></g>
           <!-- headband -->
           <path d="M44 112 C40 40 82 16 120 16 S200 40 196 112" fill="none" stroke="url(#g-band)" stroke-width="15" stroke-linecap="round"/>
           <path d="M58 92 C60 48 90 32 120 32 S180 48 182 92" fill="none" stroke="var(--hp-pad-lo)" stroke-width="7" stroke-linecap="round" opacity=".9"/>
@@ -150,6 +143,12 @@
 
   <div class="toast hidden" id="toast" role="alert"></div>
 </div>
+
+  <div class="sheet hidden" id="devices-popover" role="dialog" aria-label="Devices">
+    <div class="sheet-title">Devices</div>
+    <ul id="device-list"><li class="muted">Loading…</li></ul>
+    <button class="sheet-action" id="btn-auto">Connect automatically</button>
+  </div>
   <script src="main.js"></script>
 </body>
 </html>
