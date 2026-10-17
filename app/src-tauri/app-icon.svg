@@ -13,11 +13,13 @@
       <stop offset="0" stop-color="#ff9f0a"/><stop offset="1" stop-color="#ff375f"/>
     </linearGradient>
   </defs>
-  <rect x="100" y="100" width="824" height="824" rx="185" fill="url(#bg)"/>
-  <rect x="100.5" y="100.5" width="823" height="823" rx="184.5" fill="none" stroke="#fff" stroke-opacity=".12" stroke-width="3"/>
-  <circle cx="512" cy="560" r="330" fill="url(#glow)"/>
-  <path d="M300 590V520a212 212 0 0 1 424 0v70" fill="none" stroke="url(#hp)" stroke-width="44" stroke-linecap="round"/>
-  <rect x="262" y="540" width="118" height="196" rx="56" fill="url(#hp)"/>
-  <rect x="644" y="540" width="118" height="196" rx="56" fill="url(#hp)"/>
-  <rect x="412" y="790" width="200" height="14" rx="7" fill="url(#ult)"/>
+  <g transform="translate(512 512) scale(1.165) translate(-512 -512)">
+    <rect x="100" y="100" width="824" height="824" rx="185" fill="url(#bg)"/>
+    <rect x="100.5" y="100.5" width="823" height="823" rx="184.5" fill="none" stroke="#fff" stroke-opacity=".12" stroke-width="3"/>
+    <circle cx="512" cy="560" r="330" fill="url(#glow)"/>
+    <path d="M300 590V520a212 212 0 0 1 424 0v70" fill="none" stroke="url(#hp)" stroke-width="44" stroke-linecap="round"/>
+    <rect x="262" y="540" width="118" height="196" rx="56" fill="url(#hp)"/>
+    <rect x="644" y="540" width="118" height="196" rx="56" fill="url(#hp)"/>
+    <rect x="412" y="790" width="200" height="14" rx="7" fill="url(#ult)"/>
+  </g>
 </svg>
